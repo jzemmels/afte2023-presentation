@@ -25,23 +25,22 @@ knitr::opts_chunk$set(fig.align = "center")
 
 This work was partially funded by the Center for Statistics and Applications in Forensic Evidence (CSAFE) through Cooperative Agreement 70NANB20H019 between NIST and Iowa State University, which includes activities carried out at Carnegie Mellon University, Duke University, University of California Irvine, University of Virginia, West Virginia University, University of Pennsylvania, Swarthmore College and University of Nebraska, Lincoln.
 
-::: {.notes}
-
+::: notes
 :::
 
 ## Automatic Cartridge Case Comparison {.smaller}
 
 Obtain an objective measure of similarity between two cartridge cases
 
-- **Step 1**: Independently *pre-process* scans to isolate breech face impressions
+-   **Step 1**: Independently *pre-process* scans to isolate breech face impressions
 
 . . .
 
-- **Step 2**: *Compare* two cartridge cases to extract a set of numerical features that distinguish between matches vs. non-matches
+-   **Step 2**: *Compare* two cartridge cases to extract a set of numerical features that distinguish between matches vs. non-matches
 
 . . .
 
-- **Step 3**: Combine numerical features into a single similarity *score* (e.g., similarity score between 0 and 1)
+-   **Step 3**: Combine numerical features into a single similarity *score* (e.g., similarity score between 0 and 1)
 
 . . .
 
@@ -51,13 +50,12 @@ Challenging to know how/when these steps work correctly
 
 ## Cartridge Case Data {.smaller .scrollable}
 
-::: {.notes}
-
+::: notes
 :::
 
-- 3D topographic images using Cadre$^{\text{TM}}$ TopMatch scanner from Roy J Carver High Resolution Microscopy Facility
+-   3D topographic images using Cadre$^{\text{TM}}$ TopMatch scanner from Roy J Carver High Resolution Microscopy Facility
 
-- **x3p** file contains surface measurements at lateral resolution of 1.8 micrometers ("microns") per pixel
+-   **x3p** file contains surface measurements at lateral resolution of 1.8 micrometers ("microns") per pixel
 
 ```{r x3pImage,fig.align='center',fig.width=5,eval=TRUE}
 # knitr::knit_hooks$set(webgl = hook_webgl)
@@ -78,7 +76,7 @@ Isolate region in scan that consistently contains breech face impressions
 K013sA1 <- x3p_read("data/K013sA1.x3p") %>%
   x3p_rotate(angle = 180) %>%
   x3p_flip_y() #%>%
-  # sample_x3p(m = 4)
+# sample_x3p(m = 4)
 
 # K013sA1$mask <- NULL
 
@@ -86,7 +84,7 @@ K013sA1_processed <- x3p_read("data/K013sA1_processed.x3p") %>%
   x3p_rotate(angle = 180) %>%
   x3p_flip_y() %>%
   x3p_rotate(angle = 90)# %>%
-  # sample_x3p(m = 4)
+# sample_x3p(m = 4)
 K013sA1_processed$surface.matrix <- K013sA1_processed$surface.matrix*1e6
 K013sA1_processed$header.info$incrementY  <- K013sA1_processed$header.info$incrementY*1e6
 K013sA1_processed$header.info$incrementX  <- K013sA1_processed$header.info$incrementX*1e6
@@ -139,22 +137,20 @@ rglwidget()
 
 ***How do we know when a scan is adequately pre-processed?***
 
-::: {.notes}
-
+::: notes
 :::
-
 
 ## Step 2: Compare Cells {.smaller .scrollable}
 
-- *Registration*: Determine rotation and translation to align two scans
-  
-  - *Cross-correlation function* (CCF) measures similarity between scans
+-   *Registration*: Determine rotation and translation to align two scans
+
+-   *Cross-correlation function* (CCF) measures similarity between scans
 
 . . .
 
-- Split one scan into a grid of cells that are each registered to the other scan [@song_proposed_2013]
+-   Split one scan into a grid of cells that are each registered to the other scan [@song_proposed_2013]
 
-- For a matching pair, we assume that cells will agree on the same rotation & translation
+-   For a matching pair, we assume that cells will agree on the same rotation & translation
 
 ```{r,eval=FALSE}
 if(!file.exists("data/cellBased_knownMatch.rds")){
@@ -163,19 +159,19 @@ if(!file.exists("data/cellBased_knownMatch.rds")){
   K013sA2_processed <- x3p_read("data/K013sA2_processed.x3p")
   
   cellBased_knownMatch <- bind_rows(scored::comparison_cellBased(reference = K013sA1_processed,
-                                                     target = K013sA2_processed,
-                                                     thetas = 3,
-                                                     numCells = c(8,8),
-                                                     direction = "one",
-                                                     returnX3Ps = TRUE) %>%
-                          mutate(direction = "reference_vs_target"),
-                        scored::comparison_cellBased(reference = K013sA2_processed,
-                                                     target = K013sA1_processed,
-                                                     thetas = -3,
-                                                     numCells = c(8,8),
-                                                     direction = "one",
-                                                     returnX3Ps = TRUE) %>%
-                          mutate(direction = "target_vs_reference"))
+                                                                 target = K013sA2_processed,
+                                                                 thetas = 3,
+                                                                 numCells = c(8,8),
+                                                                 direction = "one",
+                                                                 returnX3Ps = TRUE) %>%
+                                      mutate(direction = "reference_vs_target"),
+                                    scored::comparison_cellBased(reference = K013sA2_processed,
+                                                                 target = K013sA1_processed,
+                                                                 thetas = -3,
+                                                                 numCells = c(8,8),
+                                                                 direction = "one",
+                                                                 returnX3Ps = TRUE) %>%
+                                      mutate(direction = "target_vs_reference"))
   
   saveRDS(cellBased_knownMatch,"data/cellBased_knownMatch.rds")
 }
@@ -194,7 +190,6 @@ cellBased_knownMatch %>%
 knitr::include_graphics("images/cellBasedRegistrationDiagram_x3pImage.png")
 ```
 
-
 ```{r,fig.align='center',out.width="75%",eval=FALSE}
 knitr::include_graphics("images/cellBasedRegistrationDiagram.png")
 ```
@@ -203,16 +198,15 @@ knitr::include_graphics("images/cellBasedRegistrationDiagram.png")
 
 ***Why does the algorithm "choose" a particular registration?***
 
-::: {.notes}
-
+::: notes
 :::
 
 ## Step 3: Score {.smaller}
 
-- Measure of similarity for two cartridge cases
+-   Measure of similarity for two cartridge cases
 
-  - Congruent Matching Cells (11 CMCs in example below) [@song_proposed_2013]
-  
+-   Congruent Matching Cells (11 CMCs in example below) [@song_proposed_2013]
+
 ```{r}
 if(!file.exists("figures/cmcPlot_knownMatch.png")){
   
@@ -277,7 +271,6 @@ if(!file.exists("figures/cmcPlot_knownMatch.png")){
 }
 ```
 
-
 ```{r,include=TRUE,out.width=700}
 knitr::include_graphics("figures/cmcPlot_knownMatch.png")
 ```
@@ -288,33 +281,28 @@ knitr::include_graphics("figures/cmcPlot_knownMatch.png")
 
 ***What factors influence the final similarity score?***
 
-
-::: {.notes}
-
+::: notes
 :::
 
 ## Visual Diagnostics for Algorithms {.smaller}
 
-- A number of questions arise out of using comparison algorithms
+-   A number of questions arise out of using comparison algorithms
 
-  - *How do we know when a scan is adequately pre-processed?*
+-   *How do we know when a scan is adequately pre-processed?*
 
-  - *Why does the algorithm "choose" a particular registration?*
+-   *Why does the algorithm "choose" a particular registration?*
 
-  - *What factors influence the final similarity score?*
-
+-   *What factors influence the final similarity score?*
 
 . . .
 
-- We wanted to create tools to address these questions
+-   We wanted to create tools to address these questions
 
-  - Well-constructed visuals are intuitive and persuasive
+-   Well-constructed visuals are intuitive and persuasive
 
-  - Useful for both researchers and practitioners to understand the algorithm's behavior
+-   Useful for both researchers and practitioners to understand the algorithm's behavior
 
-
-::: {.notes}
-
+::: notes
 :::
 
 ## X3P Plot {.smaller}
@@ -339,114 +327,120 @@ if(!file.exists("figures/x3pPlot_comparison.png")){
 knitr::include_graphics("figures/x3pPlot_comparison.png")
 ```
 
-- Emphasizes extreme values in scan that may need to be removed during pre-processing
+-   Emphasizes extreme values in scan that may need to be removed during pre-processing
 
-- Allows for comparison of multiple scans on the same color scheme
+-   Allows for comparison of multiple scans on the same color scheme
 
-- Map quantiles of surface values to a divergent color scheme
+-   Map quantiles of surface values to a divergent color scheme
 
 ```{r,include=TRUE,width = "60%"}
 knitr::include_graphics("images/x3pPlot_colorscheme.png")
 ```
 
-
-::: {.notes}
-
+::: notes
 :::
 
 ## Comparison Plot {.smaller .scrollable}
 
-- Separate aligned scans into similarities and differences
+![](images/cellBasedRegistration_cell1-6.png){fig-align="center" width="100%"}
 
-- Useful for understanding a registration
+-   Separate aligned cells into similarities and differences
 
-. . .
+-   Useful for understanding a registration
 
-- *Similarities*: Element-wise average between two scans after filtering elements that are less than 1 micron apart
+-   *Similarities*: Element-wise average between two scans after filtering elements that are less than 1 micron apart
 
 ```{r eval=FALSE}
-fullScan_knownMatch <- readRDS("data/fullScan_knownMatch.rds")
+cellBased_knownMatch <- readRDS("data/cellBased_knownMatch.rds")
 
-reference <- fullScan_knownMatch$cellHeightValues[[1]]
+cellBased_knownMatch <- cellBased_knownMatch %>%
+  filter(direction == "reference_vs_target") %>%
+  filter(cellIndex == "1, 6") %>%
+  select(cellIndex,cellHeightValues,alignedTargetCell)
+
+reference <- cellBased_knownMatch$cellHeightValues[[1]]
 reference$surface.matrix <- reference$surface.matrix*reference$cmcR.info$scaleByVal*1e6
 
-target <- fullScan_knownMatch$alignedTargetCell[[1]]
+target <- cellBased_knownMatch$alignedTargetCell[[1]]
 target$surface.matrix <- target$surface.matrix*target$cmcR.info$scaleByVal*1e6
 
-x3pPlot(impressions::x3p_elemAverage(reference,target),
-        x3pNames = "Element-wise Average")
+refCell <- x3pPlot(reference) + theme(legend.position = "none",strip.text = element_blank())
+
+targCell <- x3pPlot(target) + theme(legend.position = "none",strip.text = element_blank())
+
+cellAverage <- x3pPlot(impressions::x3p_elemAverage(reference,target)) + theme(strip.text = element_blank())
 
 x3pDiff <- reference
 x3pDiff$surface.matrix <- abs(reference$surface.matrix - target$surface.matrix)
 
 surfaceMat_df <- purrr::pmap_dfr(.l = list(list(x3pDiff),
-                                               "Element-wise Distance"),
-                                     function(x3p,name){
+                                           "Element-wise Distance"),
+                                 function(x3p,name){
+                                   
+                                   x3p$header.info$incrementX <- 1
+                                   x3p$header.info$incrementY <- 1
+                                   x3p$mask <- NULL
+                                   
+                                   x3p %>%
+                                     x3ptools::x3p_to_df() %>%
+                                     dplyr::mutate(xnew = max(.data$y) - .data$y,
+                                                   ynew = max(.data$x) - .data$x) %>%
+                                     dplyr::select(-c(.data$x,.data$y)) %>%
+                                     dplyr::rename(x=.data$xnew,
+                                                   y=.data$ynew) %>%
+                                     dplyr::mutate(x3p = rep(name,times = nrow(.)))
+                                 })
 
-                                       x3p$header.info$incrementX <- 1
-                                       x3p$header.info$incrementY <- 1
-                                       x3p$mask <- NULL
-
-                                       x3p %>%
-                                         x3ptools::x3p_to_df() %>%
-                                         dplyr::mutate(xnew = max(.data$y) - .data$y,
-                                                       ynew = max(.data$x) - .data$x) %>%
-                                         dplyr::select(-c(.data$x,.data$y)) %>%
-                                         dplyr::rename(x=.data$xnew,
-                                                       y=.data$ynew) %>%
-                                         dplyr::mutate(x3p = rep(name,times = nrow(.)))
-                                     })
-
-surfaceMat_df %>%
-      ggplot2::ggplot(ggplot2::aes(x = .data$x,y = .data$y)) +
-      ggplot2::geom_raster(ggplot2::aes(fill = .data$value))  +
-      ggplot2::scale_fill_gradientn(colours =  c('#2d004b','#542788','#8073ac','#b2abd2','#d8daeb','#f7f7f7','#fee0b6','#fdb863','#e08214','#b35806','#7f3b08'),
-                                    values = scales::rescale(quantile(surfaceMat_df$value,
-                                                                      c(0,.01,.025,.1,.25,.5,.75,0.9,.975,.99,1),
-                                                                      na.rm = TRUE)),
-                                    breaks = function(lims){
-                                      dat <- quantile(surfaceMat_df$value,c(0,.75,.99,1),na.rm = TRUE)
-
-                                      dat <- dat %>%
-                                        setNames(paste0(names(dat)," [",round(dat,3),"]"))
-
-                                      return(dat)
-                                    },
-                                    na.value = "gray65") +
-      ggplot2::coord_fixed(expand = FALSE) +
-      ggplot2::theme_minimal() +
-      ggplot2::theme(
-        axis.title.x = ggplot2::element_blank(),
-        axis.text.x = ggplot2::element_blank(),
-        axis.ticks.x = ggplot2::element_blank(),
-        axis.title.y = ggplot2::element_blank(),
-        axis.text.y = ggplot2::element_blank(),
-        axis.ticks.y = ggplot2::element_blank(),
-        panel.grid.major = ggplot2::element_blank(),
-        panel.grid.minor = ggplot2::element_blank(),
-        panel.background = ggplot2::element_blank()) +
-      ggplot2::guides(fill = ggplot2::guide_colourbar(barheight = grid::unit(3,"in"),
-                                                      label.theme = ggplot2::element_text(size = 8),
-                                                      title.theme = ggplot2::element_text(size = 10),
-                                                      frame.colour = "black",
-                                                      ticks.colour = "black"),
-                      colour = 'none') +
-      ggplot2::labs(fill = expression("Rel. Height ["*mu*"m]")) +
-      ggplot2::facet_wrap(~ x3p)
+cellDifference <- surfaceMat_df %>%
+  ggplot2::ggplot(ggplot2::aes(x = .data$x,y = .data$y)) +
+  ggplot2::geom_raster(ggplot2::aes(fill = .data$value))  +
+  ggplot2::scale_fill_gradientn(colours =  c('#2d004b','#542788','#8073ac','#b2abd2','#d8daeb','#f7f7f7','#fee0b6','#fdb863','#e08214','#b35806','#7f3b08'),
+                                values = scales::rescale(quantile(surfaceMat_df$value,
+                                                                  c(0,.01,.025,.1,.25,.5,.75,0.9,.975,.99,1),
+                                                                  na.rm = TRUE)),
+                                breaks = function(lims){
+                                  dat <- quantile(surfaceMat_df$value,c(0,.75,.99,1),na.rm = TRUE)
+                                  
+                                  dat <- dat %>%
+                                    setNames(paste0(names(dat)," [",round(dat,3),"]"))
+                                  
+                                  return(dat)
+                                },
+                                na.value = "gray65") +
+  ggplot2::coord_fixed(expand = FALSE) +
+  ggplot2::theme_minimal() +
+  ggplot2::theme(
+    axis.title.x = ggplot2::element_blank(),
+    axis.text.x = ggplot2::element_blank(),
+    axis.ticks.x = ggplot2::element_blank(),
+    axis.title.y = ggplot2::element_blank(),
+    axis.text.y = ggplot2::element_blank(),
+    axis.ticks.y = ggplot2::element_blank(),
+    panel.grid.major = ggplot2::element_blank(),
+    panel.grid.minor = ggplot2::element_blank(),
+    panel.background = ggplot2::element_blank()) +
+  ggplot2::guides(fill = ggplot2::guide_colourbar(barheight = grid::unit(3,"in"),
+                                                  label.theme = ggplot2::element_text(size = 8),
+                                                  title.theme = ggplot2::element_text(size = 10),
+                                                  frame.colour = "black",
+                                                  ticks.colour = "black"),
+                  colour = 'none') +
+  ggplot2::labs(fill = expression("Rel. Height ["*mu*"m]")) +
+  ggplot2::facet_wrap(~ x3p)
 
 
 x3pDiff_bin <- x3pDiff
 x3pDiff_bin$surface.matrix <- (x3pDiff_bin$surface.matrix > 1)
 
-x3pDiff_bin %>%
+cellDifference_bin <- x3pDiff_bin %>%
   x3ptools::x3p_to_df() %>%
   mutate(x = x/x3pDiff_bin$header.info$incrementX,
          y = y/x3pDiff_bin$header.info$incrementY) %>%
   dplyr::mutate(xnew = max(.data$y) - .data$y,
-                                                       ynew = max(.data$x) - .data$x) %>%
-                                         dplyr::select(-c(.data$x,.data$y)) %>%
-                                         dplyr::rename(x=.data$xnew,
-                                                       y=.data$ynew) %>%
+                ynew = max(.data$x) - .data$x) %>%
+  dplyr::select(-c(.data$x,.data$y)) %>%
+  dplyr::rename(x=.data$xnew,
+                y=.data$ynew) %>%
   ggplot(aes(x=x,y=y)) +
   geom_raster(fill = "gray65") +
   geom_raster(aes(fill=value)) +
@@ -458,23 +452,71 @@ x3pDiff_bin %>%
   theme(legend.key = element_rect(color = "black")) +
   labs(fill = "Greater than 1")
 
+x3pSim_bin <- x3pDiff
+x3pSim_bin$surface.matrix <- (x3pSim_bin$surface.matrix <= 1)
+
+cellSimilarity_bin <- x3pSim_bin %>%
+  x3ptools::x3p_to_df() %>%
+  mutate(x = x/x3pSim_bin$header.info$incrementX,
+         y = y/x3pSim_bin$header.info$incrementY) %>%
+  dplyr::mutate(xnew = max(.data$y) - .data$y,
+                ynew = max(.data$x) - .data$x) %>%
+  dplyr::select(-c(.data$x,.data$y)) %>%
+  dplyr::rename(x=.data$xnew,
+                y=.data$ynew)  %>%
+  ggplot(aes(x=x,y=y)) +
+  geom_raster(fill = "gray65") +
+  geom_raster(aes(fill=value)) +
+  coord_fixed(expand=FALSE) +
+  theme_void() +
+  scale_fill_manual(values = c("black","white"),
+                    na.value = "gray65",
+                    na.translate = FALSE) +
+  theme(legend.key = element_rect(color = "black")) +
+  labs(fill = "Less Than or Equal to 1")
+
 x3pAveraged_filt <- x3p_filter(x3p = x3p_elemAverage(reference,target),
                                cond = function(x,y,thresh) abs(y) <= thresh,
                                y = c({reference$surface.matrix - target$surface.matrix}),
                                thresh = 1)
 
+cellAverage_filt <- x3pPlot(x3pAveraged_filt) +
+  theme(strip.text = element_blank(),
+        legend.position = "none")
+
+x3pAveraged_filt <- x3p_filter(x3p = x3p_elemAverage(reference,target),
+                               cond = function(x,y,thresh) abs(y) <= thresh,
+                               y = c({reference$surface.matrix - target$surface.matrix}),
+                               thresh = 1)
+
+cellAverage_filt <- x3pPlot(x3pAveraged_filt) +
+  theme(strip.text = element_blank(),
+        legend.position = "none")
+
+ggsave(filename = "figures/refCell.png",plot = refCell,bg="white")
+ggsave(filename = "figures/targCell.png",plot = targCell,bg="white")
+ggsave(filename = "figures/cellAverage.png",plot = cellAverage,bg="white")
+ggsave(filename = "figures/cellDifference.png",plot = cellDifference,bg="white")
+ggsave(filename = "figures/cellDifference_bin.png",plot = cellDifference_bin,bg="white")
+ggsave(filename = "figures/cellSimilarity_bin.png",plot = cellSimilarity_bin,bg="white")
+ggsave(filename = "figures/cellAverage_filt.png",plot = cellAverage_filt,bg="white")
+
+cellComparisonPlot <- impressions::x3p_comparisonPlot(reference,target,type = "list",plotLabels = c(""," ","  ","   ","    "))
+
+ggsave(filename = "figures/refCell_differences.png",plot = cellComparisonPlot[[4]],bg="white")
+ggsave(filename = "figures/targCell_differences.png",plot = cellComparisonPlot[[5]],bg="white")
+
+walk(list.files("figures",full.names = TRUE),knitr::plot_crop)
 ```
 
+![](images/filteringIllustration-cell.png){fig-align="center" width="70%"}
 
-![](images/filteringIllustration.png){fig-align="center" width="70%"}
 
-. . .
+-   *Differences*: Elements of both scans that are at least 1 micron apart
 
-- *Differences*: Elements of both scans that are at least 1 micron apart
+![](images/filteringDifferencesIllustration-cell.png){fig-align="center" width="70%"}
 
-![](images/filteringDifferencesIllustration.png){fig-align="center" width="70%"}
-
-::: {.notes}
+::: notes
 
 :::
 
@@ -482,7 +524,7 @@ x3pAveraged_filt <- x3p_filter(x3p = x3p_elemAverage(reference,target),
 
 ```{r}
 if(!file.exists("figures/cellBasedComparison.png")){
- 
+  
   cellBased_knownMatch <- readRDS("data/cellBased_knownMatch.rds")
   
   plt <- cellBased_knownMatch %>%
@@ -515,57 +557,37 @@ if(!file.exists("figures/cellBasedComparison.png")){
 }
 ```
 
-<div class="r-stack">
-
-::: {.fragment fade-out fragment-index=1}
-
-![](images/cellBasedRegistration_cell1-6.png){fig-align="center" width=100%}
-
-:::
-
-::: {.fragment .fade-up fragment-index=1}
-
 ```{r,include=TRUE,out.width = "100%"}
 knitr::include_graphics("figures/cellBasedComparison.png")
 ```
 
-:::
 
-</div>
-
-::: {.notes}
-
+::: notes
 :::
 
 ## Thank You!
 
-::: {.notes}
-
-I want to thank you all for joining me.
-On the slide are additional links to resources in case you are interested in learning more about the tools I discussed today
-
+::: notes
+I want to thank you all for joining me. On the slide are additional links to resources in case you are interested in learning more about the tools I discussed today
 :::
 
-- **cartridgeInvestigatR** interactive web application
-  - <https://csafe.shinyapps.io/cartridgeInvestigatR/>
-
-- **impressions** R package for visual diagnostics
-  - <https://jzemmels.github.io/impressions/>
-
-- **scored** R package for ACES algorithm
-  - <https://jzemmels.github.io/scored/>
+-   **cartridgeInvestigatR** interactive web application
+-   <https://csafe.shinyapps.io/cartridgeInvestigatR/>
+-   **impressions** R package for visual diagnostics
+-   <https://jzemmels.github.io/impressions/>
+-   **scored** R package for ACES algorithm
+-   <https://jzemmels.github.io/scored/>
 
 ## References
 
 ::: {#refs}
-
 :::
 
 # Appendix
 
 ## Step 2: Compare Full Scans {.smaller}
 
-- *Registration*: Determine rotation and translation to align two scans
+-   *Registration*: Determine rotation and translation to align two scans
 
 ```{r fullScanComparison,eval=FALSE}
 K013sA1_processed <- x3p_read("data/K013sA1_processed.x3p") %>%
@@ -591,27 +613,23 @@ knitr::include_graphics("images/fullScanRegistrationDiagram_x3pImage.png")
 
 . . .
 
-- *Cross-correlation function* (CCF) measures similarity between scans
+-   *Cross-correlation function* (CCF) measures similarity between scans
 
-  - Choose the rotation/translation that maximizes the CCF
+-   Choose the rotation/translation that maximizes the CCF
 
-
-::: {.notes}
-
+::: notes
 :::
 
 ## X3P Plot Pre-processing Example {.smaller}
 
-- Useful for diagnosing when scans need additional pre-processing
+-   Useful for diagnosing when scans need additional pre-processing
 
 ```{r,include=TRUE,fig.align='center',out.width = "50%"}
 knitr::include_graphics("images/preProcessEffectExample.png")
 ```
 
-::: {.notes}
-
+::: notes
 :::
-
 
 ## Full Scan Comparison Plot
 
@@ -642,7 +660,5 @@ if(!file.exists("figures/comparisonPlotExample.png")){
 knitr::include_graphics("figures/comparisonPlotExample.png")
 ```
 
-::: {.notes}
-
+::: notes
 :::
-
