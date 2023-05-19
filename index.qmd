@@ -287,12 +287,9 @@ knitr::include_graphics("figures/cmcPlot_knownMatch.png")
 ## Visual Diagnostics for Algorithms {.smaller}
 
 -   A number of questions arise out of using comparison algorithms
-
--   *How do we know when a scan is adequately pre-processed?*
-
--   *Why does the algorithm "choose" a particular registration?*
-
--   *What factors influence the final similarity score?*
+  -   *How do we know when a scan is adequately pre-processed?*
+  -   *Why does the algorithm "choose" a particular registration?*
+  -   *What factors influence the final similarity score?*
 
 . . .
 
@@ -572,11 +569,13 @@ I want to thank you all for joining me. On the slide are additional links to res
 :::
 
 -   **cartridgeInvestigatR** interactive web application
--   <https://csafe.shinyapps.io/cartridgeInvestigatR/>
+  -   <https://csafe.shinyapps.io/cartridgeInvestigatR/>
+
 -   **impressions** R package for visual diagnostics
--   <https://jzemmels.github.io/impressions/>
+  -   <https://jzemmels.github.io/impressions/>
+
 -   **scored** R package for ACES algorithm
--   <https://jzemmels.github.io/scored/>
+  -   <https://jzemmels.github.io/scored/>
 
 ## References
 
